@@ -1,2 +1,5 @@
 #system
 .DS_Store
+
+#config git
+config/basedir
