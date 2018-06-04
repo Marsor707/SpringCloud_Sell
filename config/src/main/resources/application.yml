@@ -5,7 +5,7 @@ spring:
     config:
       server:
         git:
-          uri:
+          uri: https://gitee.com/Marsor/config_repo.git
           basedir: ./basedir
 eureka:
   client:
