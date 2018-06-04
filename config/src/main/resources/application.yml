@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: config
+  cloud:
+    config:
+      server:
+        git:
+          uri:
+          basedir: ./basedir
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
