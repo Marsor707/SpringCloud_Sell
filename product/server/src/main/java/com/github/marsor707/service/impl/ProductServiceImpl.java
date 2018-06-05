@@ -8,6 +8,8 @@ import com.github.marsor707.enums.ResultEnum;
 import com.github.marsor707.exception.ProductException;
 import com.github.marsor707.repository.ProductInfoRepository;
 import com.github.marsor707.service.ProductService;
+import com.github.marsor707.utils.JsonUtil;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductInfoRepository productInfoRepository;
+    @Autowired
+    private AmqpTemplate amqpTemplate;
 
     @Override
     public List<ProductInfo> findUpAll() {
@@ -47,11 +51,19 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void decreaseStock(List<DecreaseStockInput> decreaseStockInputList) {
-        decreaseStockProcess(decreaseStockInputList);
+        List<ProductInfo> productInfoList = decreaseStockProcess(decreaseStockInputList);
+        List<ProductInfoOutput> productInfoOutputList = productInfoList.stream()
+                .map(e -> {
+                    ProductInfoOutput output = new ProductInfoOutput();
+                    BeanUtils.copyProperties(e, output);
+                    return output;
+                }).collect(Collectors.toList());
+        amqpTemplate.convertAndSend("productInfo", JsonUtil.toJson(productInfoOutputList));
     }
 
     @Transactional
-    private void decreaseStockProcess(List<DecreaseStockInput> decreaseStockInputList) {
+    private List<ProductInfo> decreaseStockProcess(List<DecreaseStockInput> decreaseStockInputList) {
+        List<ProductInfo> productInfoList = new ArrayList<>();
         for (DecreaseStockInput decreaseStockInput : decreaseStockInputList) {
             Optional<ProductInfo> productInfoOptional =
                     productInfoRepository.findById(decreaseStockInput.getProductId());
@@ -69,6 +81,8 @@ public class ProductServiceImpl implements ProductService {
 
             productInfo.setProductStock(result);
             productInfoRepository.save(productInfo);
+            productInfoList.add(productInfo);
         }
+        return productInfoList;
     }
 }
