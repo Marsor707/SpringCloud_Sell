@@ -10,4 +10,6 @@ import com.github.marsor707.dto.OrderDTO;
 public interface OrderService {
 
     OrderDTO create(OrderDTO orderDTO);
+
+    OrderDTO finish(String orderId);
 }
